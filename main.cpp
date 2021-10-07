@@ -87,17 +87,15 @@ namespace Conversion
     */
   }
 
-  void DecimalToBinary(int decimalNum, int& binaryNum)
+  void DecimalToBinary(int decimalNum, std::string& binaryStr)
   {
-    std::string binaryStr = ""; //create a string that will store our remainders
-    while (decimalNum != 0)
+    while (decimalNum != 0) //While decimalNum is not equal to 0, we divide it by 2 and store the remainder, remainders read backwards is our binary number.
       {
 	binaryStr += std::to_string(decimalNum % 2);
 	decimalNum = ceil(decimalNum / 2);
       }
 
     reverseString(binaryStr);
-    binaryNum = std::stoi(binaryStr);
   }
 
   void HexToDecimal(std::string hexNum, int& output)
@@ -208,12 +206,12 @@ int main()
   else if (choice == 2)
   {
     int decimalNum = 0;
-    int output = 0;
+    std::string output = "";
     
     printf("Enter the decimal number: ");
     std::cin >> decimalNum;
     Conversion::DecimalToBinary(decimalNum, output);
-    printf("%d\n", output);
+    std::cout << "Binary equivalent: " << output << std::endl;
   }
 
   else if (choice == 3)
