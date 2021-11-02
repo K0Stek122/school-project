@@ -6,7 +6,10 @@
 #include <stdlib.h>
 #include <algorithm>
 #include <cmath>
+#include <ncurses.h>
+#include <sstream>
 
+#include "ascii.h"
 /*
   This version adds all the user-friendly things that were explained in version3.
  */
@@ -120,10 +123,15 @@ namespace Conversion
 	parsedHex.push_back(14);
       else if (c == 'F')
 	parsedHex.push_back(15);
-      else
+      else if (c == '1' || c == '2' || c == '3' || c == '4' || c == '5' || c == '6' || c == '7' || c == '8' || c == '9' || c == '0')
       {
-	parsedHex.push_back(std::stoi(&c)); //if it does not match any hex digits, it will just convert it to int (std::stoi) and push it into the parsedHex vector
+	std::string s;
+	std::stringstream ss;
+	ss << c;
+	ss >> s;
+	parsedHex.push_back(std::stoi(s)); //if it does not match any hex digits, it will just convert it to int (std::stoi) and push it into the parsedHex vector
       }
+      
     }
 
     std::reverse(parsedHex.begin(), parsedHex.end()); //reverses the array, when converting hex to decimal, we go from right to left, therefore we reverse the array
@@ -224,93 +232,91 @@ namespace Conversion
 }
 
 int main()
-{ 
-  int choice = 0;
-  printf("1. Binary to Decimal\n");
-  printf("2. Decimal to Binary\n");
-  printf("3. Hexadecimal to Decimal\n");
-  printf("4. Decimal to Hexadecimal\n");
-  printf("5. Hexadecimal to Binary\n");
-  printf("6. Binary to Hexadecimal\n");
-  printf(": ");
-  std::cin >> choice;
+{
+  ascii::init_scr(true);
+
+  int pointerY = 1;
   
-  if (choice == 1)
+  std::string decimal = "";
+  std::string binary = "";
+  std::string hex = "";
+  
+  while (true)
   {
-    int firstMethodOutput = 0;
-    int secondMethodOutput = 0;
-    int binaryNum = 0;
-    
-    printf("Enter the binary number: ");
-    std::cin >> binaryNum;
-    while (std::to_string(binaryNum).find("0") == std::string::npos || std::to_string(binaryNum).find("1") == std::string::npos)
+    char c = getch();
+    if (c == 66 && pointerY < 3) //DOWN
     {
-      printf("Incorrect number entered.");
-      printf("\nEnter the binary number: ");
-      std::cin >> binaryNum;      
+      pointerY++;
     }
-  
-    Conversion::BinaryToDecimal(binaryNum, firstMethodOutput);
-    Conversion::BinaryToDecimal2(binaryNum, secondMethodOutput);
-
-    printf("First binary method: Decimal number = %d\n", firstMethodOutput);
-    printf("Second binary method: Decimal Number = %d\n", secondMethodOutput);
-  }
-
-  else if (choice == 2)
-  {
-    int decimalNum = 0;
-    std::string output = "";
-    
-    printf("Enter the decimal number: ");
-    std::cin >> decimalNum;
-    Conversion::DecimalToBinary(decimalNum, output);
-    std::cout << "Binary equivalent: " << output << std::endl;
-  }
-
-  else if (choice == 3)
-  {
-    int output = 0;
-    std::string hex = "";
-    printf("Enter hex number: ");
-    std::cin >> hex;
-    Conversion::HexToDecimal(hex, output);
-    printf("The decimal equivalent is: %i\n", output);
-    
-  }
-
-  else if (choice == 4)
-  {
-    int decimal = 0;
-    std::string output = "";
-    printf("Enter a decimal number: ");
-    std::cin >> decimal;
-    Conversion::DecimalToHex(decimal, output);
-    std::cout << "The hex equivalent is: " << output << std::endl;
-  }
-
-  //Hex to binary
-  else if (choice == 5)
-  {
-    std::string hex = "";
-    std::string output = "";
-    printf("Enter a hex number: ");
-    std::cin >> hex;
-    Conversion::HexToBinary(hex, output);
-    std::cout << "The binary equivalent is: " << output << std::endl;
-  }
-
-  //Binary to Hex
-  else
-  {
-    std::string binary = "";
-    std::string output = "";
-    printf("Enter a binary number: ");
-    std::cin >> binary;
-    Conversion::BinaryToHex(binary, output);
-    std::cout << "The Hex equivalent is: " << output << std::endl;
+    if (c == 65 && pointerY > 1) //UP
+    {
+      pointerY--;
+    }
+    if (c == 10) //ENTER
+    {
+      decimal = "";
+      hex = "";
+      binary = "";
+      while (true)
+      {
+	char c = getch();
+	switch(pointerY)
+	{
+	case 1:
+	  decimal += c;
+	  break;
+	case 2:
+	  if (c == '1' || c == '0')
+	    binary += c;
+	  break;
+	case 3:
+	  hex += c;
+	  break;
+	}
+	refresh();
+	if (c == 10)
+	  break;
+      }
       
+      if (pointerY == 1) //DECIMAL INPUT
+      {
+	Conversion::DecimalToBinary(std::stoi(decimal), binary);
+	Conversion::DecimalToHex(std::stoi(decimal), hex);
+      }
+      else if (pointerY == 2) //BINARY INPUT
+      {
+	int tempDecimal = 0;
+	Conversion::BinaryToDecimal(std::stoi(binary), tempDecimal);
+	decimal = std::to_string(tempDecimal);
+	Conversion::BinaryToHex(binary, hex);
+      }
+      else if (pointerY == 3) //HEX INPUT
+      {
+	int tempDecimal = 0;
+	Conversion::HexToDecimal(hex, tempDecimal);
+	decimal = std::to_string(tempDecimal);
+	Conversion::HexToBinary(hex, binary);
+      }
+      
+    }
+    
+    WINDOW* win = ascii::print_window(5, 50, 1, 1);
+    ascii::print("Decimal: ", 2, 1, win);
+    ascii::print(decimal.c_str(), 10, 1, win);
+    
+    ascii::print("Binary: ", 2, 2, win);
+    ascii::print(binary.c_str(), 10, 2, win);
+    
+    ascii::print("Hex: ", 2, 3, win);
+    ascii::print(hex.c_str(), 10, 3, win);
+    
+    ascii::print(">", 1, pointerY, win);
+
+    refresh();
+    wrefresh(win);
   }
+
+  ascii::end_scr();
   
   return 0;
 }
